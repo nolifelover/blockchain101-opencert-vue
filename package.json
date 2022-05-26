@@ -7,6 +7,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "@govtechsg/oa-verify": "^7.9.1",
     "@metamask/detect-provider": "^1.2.0",
     "@metamask/onboarding": "^1.0.1",
     "@popperjs/core": "^2.10.1",
@@ -18,7 +19,8 @@
     "npm": "^7.23.0",
     "vue": "^3.2.11",
     "vue-router": "^4.0.0-0",
-    "vue-toastification": "^2.0.0-beta.9"
+    "vue-toastification": "^2.0.0-beta.9",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
