@@ -7,7 +7,10 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@govtechsg/oa-verify": "^7.9.1",
+    "@govtechsg/oa-encryption": "^1.3.3",
+    "@govtechsg/oa-verify": "^7.4.3",
+    "@govtechsg/open-attestation": "^5.2.3",
+    "@govtechsg/opencerts-verify": "^3.1.0",
     "@metamask/detect-provider": "^1.2.0",
     "@metamask/onboarding": "^1.0.1",
     "@popperjs/core": "^2.10.1",
