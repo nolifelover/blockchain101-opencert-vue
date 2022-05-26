@@ -1,13 +1,27 @@
 <template>
-  <div id="uploadWrapper">
-    {{ title }}
-    <input type="file" @change="uploadFile" ref="file" />
-    <button @click="submitFile">Upload!</button>
+  <div id="contentWrapper">
+    <div id="uploadWrapper">
+      <input type="file" name="file" id="file" @change="uploadFile" ref="file" />
+      <label id="file-select-btn" for="file">Select a certification file</label>
+    </div>
+    <div v-if="isLoading" id="loadingWrapper">
+      <img src="../assets/loading.gif" />
+      <div id="loadingState">{{state}}</div>
+    </div>
+    <div v-if="isCertReady" id="certRenderWrapper">
+      <div id="certContentWrapper">
+        <p>This is to certify that</p>
+        <p id="studentName">{{ certData.recipient.name}}</p>
+        <p>has successfully completed the</p>
+        <p id="courseName">{{ certData.recipient.course }}</p>
+        <p id="issueDate">Issued on : {{ certData.issuedOn }}</p>
+        <p id="issuer">By : {{ certData.issuers[0].name }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-// import {verificationBuilder, verify, openAttestationVerifiers, isValid} from "@govtechsg/oa-verify";
 import { verify, isValid } from "@govtechsg/opencerts-verify";
 import { getData } from "@govtechsg/open-attestation";
 import { utils } from "@govtechsg/oa-verify";
@@ -19,86 +33,112 @@ const providerOptions = {
   url: "https://ropsten.infura.io/v3/d0def9a28dfb4337bd7315a2a9bcc22c",
   apiKey: "d0def9a28dfb4337bd7315a2a9bcc22c",
 }
+
 const provider = utils.generateProvider(providerOptions);
 
 const ropstenVerify = verify({
   provider: provider,
 });
+
 export default {
   name: "FileVerifier",
   data() {
     return {
-      title: "upload opencert file",
       file: null,
       fileJson: null,
+      state:'',
+      isCertValid:false,
+      isLoading:false,
+      isCertReady:false,
+      certData:null
     };
   },
   methods: {
-    uploadFile() {
+    async uploadFile() {
+
+      this.isLoading = true;
+      this.state = 'File Reading..';
       this.file = this.$refs.file.files[0];
       const fr = new FileReader();
-      
+
       fr.onload = async (e) => {
+
+        // 1. extract data from cert
+        this.state = 'Extracting file..';
         const result = JSON.parse(e.target.result.trim());
-        console.log("event %o", result);
-        this.fileJson = result;
-        //const verify1 = verificationBuilder(openAttestationVerifiers, {network: "rinkeby"});
-        /* const verify1 = verificationBuilder(openAttestationVerifiers, {
-          network: "ropsten",
-        });*/
-        console.log("file content %o", result);
-        console.log("data %o", result);
+        const data = getData(result);
+        console.log("certData %o", data);
+        this.certData = data;
+
+        // 2. verify cert
+        this.state = 'Verifying file..';
         const fragments = await ropstenVerify(
           result
         );
-        //console.log()
-        console.log("- fragments %o", fragments)
-        //console.log(isValid(fragments, ["DOCUMENT_INTEGRITY"])); // output true
-        //console.log(isValid(fragments, ["DOCUMENT_STATUS"])); // output false
-        //console.log(isValid(fragments, ["ISSUER_IDENTITY"])); // outpute false
-        //console.log(isValid(fragments)); // output false
-        // console.log("- data %o", _document);
-        const documentData = getData(result);
-        console.log("document data %o", documentData);
-        console.log(isValid(fragments));
-        // this.fileJson.default = result;
+        this.isCertValid = isValid(fragments)
+
+        // 3. render
+        this.state = this.isCertValid ? 'Cert is valid':'Cert is not valid';
+        setTimeout(async ()=>{
+          await this.render()
+        },2000)
+
       };
+
       fr.readAsBinaryString(this.file)
-      //fr.readAsText(this.file);
     },
-    async submitFile() {
-      //this.customVerifier(this.file)
-      console.log("this.fileJson %o", this.fileJson)
-      //this.customVerifier(this.fileJson.toJSON())
-      //console.log("local document %o",document)
-      //this.customVerifier(document);
-    },
-    async customVerifier(_document) {
-      //const verify1 = verificationBuilder(openAttestationVerifiers, {network: "rinkeby"});
-      /* const verify1 = verificationBuilder(openAttestationVerifiers, {
-        network: "ropsten",
-      });*/
-      console.log("file content %o", _document);
-      console.log("data %o", _document);
-      const fragments = await ropstenVerify(
-        _document
-      );
-      //console.log()
-      console.log("- fragments %o", fragments)
-      //console.log(isValid(fragments, ["DOCUMENT_INTEGRITY"])); // output true
-      //console.log(isValid(fragments, ["DOCUMENT_STATUS"])); // output false
-      //console.log(isValid(fragments, ["ISSUER_IDENTITY"])); // outpute false
-      //console.log(isValid(fragments)); // output false
-      // console.log("- data %o", _document);
-      const documentData = getData(_document.default);
-      console.log("document data %o", documentData);
-    },
+    async render(){
+      this.isLoading = false
+      this.isCertReady = true
+    }
   },
 };
 </script>
 
 <style scoped>
+#contentWrapper{
+  margin: auto;
+  text-align: center;
+}
+
 #uploadWrapper {
-  padding-top: 15vh;
+  padding-top: 10vh;
+}
+
+#file{
+  display: none;
+}
+
+#file-select-btn{
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  background-color: black;
+  color: white;
+}
+
+#loadingWrapper{
+  margin-top: 3rem;
+}
+
+#loadingWrapper img{
+  width: 36px;
+}
+
+#certRenderWrapper{
+  margin:auto;
+  margin-top: 3rem;
+  width: 800px;
+  height: 400px;
+  align-content: center;
+  border: 1px solid black;
+  padding: 30px;
+  color: white;
+  background: #00c6ff; /* fallback for old browsers */
+  background: -webkit-linear-gradient(45deg, #00c6ff, #0072ff); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(45deg, #00c6ff, #0072ff); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */;
+}
+
+#certContentWrapper{
+  margin-top: 50px;
 }
 </style>
